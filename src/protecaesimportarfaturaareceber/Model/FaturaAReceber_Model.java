@@ -1,8 +1,8 @@
 package protecaesimportarfaturaareceber.Model;
 
-import Auxiliar.LctoTemplate;
-import Auxiliar.Valor;
 import JExcel.JExcel;
+import TemplateContabil.Model.Entity.LctoTemplate;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -18,10 +18,15 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+import Dates.Dates;
+
 public class FaturaAReceber_Model {
 
     private File arquivo;
     private List<LctoTemplate> lctosFatura = new ArrayList<>();
+
+    //string date format for d/m/y
+    private String dateFormat = "dd/MM/yyyy";
 
     private Workbook wk;
     private Sheet sheet;
@@ -70,13 +75,12 @@ public class FaturaAReceber_Model {
                         Date date = cellData.getDateCellValue();
                         Calendar dateCalendar = Calendar.getInstance();
                         dateCalendar.setTime(date);
-                        Valor dataValor = new Valor(dateCalendar);
 
                         //Se tiver valor
                         Cell cellValor = row.getCell(JExcel.Cell("E"));
                         try {
-                            Valor valor = new Valor(cellValor.getNumericCellValue());
-                            if (valor.getBigDecimal().compareTo(BigDecimal.ZERO) != 0) {
+                            BigDecimal valor = new BigDecimal(cellValor.getNumericCellValue());
+                            if (valor.compareTo(BigDecimal.ZERO) != 0) {
                                 //Se tiver Historico
                                 String cliente = row.getCell(JExcel.Cell("B")).getStringCellValue();
                                 String descricao = row.getCell(JExcel.Cell("B")).getStringCellValue();
@@ -84,7 +88,7 @@ public class FaturaAReceber_Model {
                                 if (!cliente.equals("") && !descricao.equals("")) {
                                     lctosFatura.add(
                                             new LctoTemplate(
-                                                    dataValor.getString(),
+                                                    Dates.getCalendarInThisStringFormat(dateCalendar, dateFormat),
                                                     "",
                                                     "FAT",
                                                     cliente + " " + descricao,

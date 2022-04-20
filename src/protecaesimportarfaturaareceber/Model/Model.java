@@ -1,12 +1,13 @@
 package protecaesimportarfaturaareceber.Model;
 
-import Auxiliar.LctoTemplate;
 import Robo.View.roboView;
-import Selector.Pasta;
+import TemplateContabil.Model.Entity.LctoTemplate;
+import fileManager.FileManager;
+import fileManager.Selector;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import main.Arquivo;
 
 public class Model {
 
@@ -64,7 +65,7 @@ public class Model {
     public boolean setArquivoFatura() {
         String filtroNomeArquivoFatura = "Fatura;Receber;.xls";
         try {
-            arquivoFatura = Pasta.procura_arquivo(pastaMovimento, filtroNomeArquivoFatura, ".xlsx");
+            arquivoFatura = Selector.getFileOnFolder(pastaMovimento, filtroNomeArquivoFatura, ".xlsx");
 
             if (arquivoFatura.exists()) {
                 return true;
@@ -102,7 +103,7 @@ public class Model {
                 textoImportação.append(cred).append(";");
                 textoImportação.append(hp).append(";");
                 textoImportação.append(lctoTemplate.getHistorico()).append(";");
-                textoImportação.append(lctoTemplate.getValor().getString());
+                textoImportação.append(lctoTemplate.getValor().toPlainString());
                 textoImportação.append("\r\n");
             }
             
@@ -115,7 +116,7 @@ public class Model {
     public boolean salvarTextoImportação(){
         String pathArquivoFaturaTxt = arquivoFatura.getAbsolutePath().replaceAll(".xls", ".csv");
         obs = pathArquivoFaturaTxt; 
-        return Arquivo.salvar(pathArquivoFaturaTxt, textoImportação.toString());
+        return FileManager.save(pathArquivoFaturaTxt, textoImportação.toString());
     }
 
     public String getNomeEmpresa() {
