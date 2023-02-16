@@ -63,37 +63,40 @@ public class FaturaAReceber_Model {
 
     private boolean buscarLctos() {
         try {
+            String colunaData = Config.config.fetch("faturaReceberColunas", "data");
+            String colunaValor = Config.config.fetch("faturaReceberColunas", "valor");
+            String colunaCliente = Config.config.fetch("faturaReceberColunas", "cliente");
+
             for (int i = 0; i <= sheet.getLastRowNum(); i++) {
                 try {
                     Row row = sheet.getRow(i);
 
                     //Se tiver data
-                    Cell cellData = row.getCell(JExcel.Cell("D"));
+                    Cell cellData = row.getCell(JExcel.Cell(colunaData));
                     if (JExcel.isDateCell(cellData)) {
                         Date date = cellData.getDateCellValue();
                         Calendar dateCalendar = Calendar.getInstance();
                         dateCalendar.setTime(date);
 
                         //Se tiver valor
-                        Cell cellValor = row.getCell(JExcel.Cell("E"));
+                        Cell cellValor = row.getCell(JExcel.Cell(colunaValor));
                         try {
                             BigDecimal valor = new BigDecimal(cellValor.getNumericCellValue());
                             if (valor.compareTo(BigDecimal.ZERO) != 0) {
                                 //Se tiver Historico
-                                String cliente = row.getCell(JExcel.Cell("B")).getStringCellValue();
-                                String descricao = row.getCell(JExcel.Cell("B")).getStringCellValue();
+                                String cliente = row.getCell(JExcel.Cell(colunaCliente)).getStringCellValue();
 
-                                if (!cliente.equals("") && !descricao.equals("")) {
-                                    lctosFatura.add(
-                                            new LctoTemplate(
-                                                    Dates.getCalendarInThisStringFormat(dateCalendar, dateFormat),
-                                                    "",
-                                                    "FAT",
-                                                    cliente + " " + descricao,
-                                                    valor
-                                            )
-                                    );
-                                }
+                                if (cliente.equals("")) continue;
+
+                                lctosFatura.add(
+                                    new LctoTemplate(
+                                        Dates.getCalendarInThisStringFormat(dateCalendar, dateFormat),
+                                        "",
+                                        "FAT",
+                                        cliente,
+                                        valor
+                                    )
+                                );                                
                             }
                         } catch (Exception e) {
                         }
