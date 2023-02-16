@@ -13,17 +13,13 @@ public class Model {
 
     public String obs = "";
 
-    private Integer mes;
     private Integer ano;
-    private Integer empresa;
 
     private String mesMM;
     private String nomeEmpresa;
     private String pastaEmpresa;
 
-    private String pastaMovimentoPadrao = "\\\\HEIMERDINGER\\DOCS\\Contábil\\Clientes\\#NOMEEMPRESA#\\Escrituração mensal\\#ANO#\\Movimento\\#MES#.#ANO#";
     private File pastaMovimento = null;
-
     private File arquivoFatura = null;
 
     private List<LctoTemplate> lctosFatura = new ArrayList<>();
@@ -31,52 +27,46 @@ public class Model {
     private StringBuilder textoImportação = new StringBuilder();
 
     public Model(int mes, int ano, int empresa) {
-        this.mes = mes;
         this.ano = ano;
-        this.empresa = empresa;
-
         this.mesMM = (mes < 10 ? "0" : "") + mes;
 
-        definirEmpresa();
+        definirEmpresa(empresa);
     }
 
-    public void definirEmpresa() {
-        this.nomeEmpresa = empresa == 332 ? "Proterisco" : "Protecães";
-        this.pastaEmpresa = empresa == 332 ? "Proterisco Locações e Soluções em Segurança Ltda" : "Protecães Locação de Cães e Sistemas de Segurança Eireli";
+    public void definirEmpresa(int empresaCodigo) {
+        this.nomeEmpresa = Config.config.fetch("enterprisesNames", empresaCodigo + "");
+        this.pastaEmpresa = Config.config.fetch("enterprisesFolders", empresaCodigo + "");
     }
 
     public boolean setPastaMovimento() {
         try {
-            String path = pastaMovimentoPadrao.replaceAll("#NOMEEMPRESA#", this.pastaEmpresa);
-            path = path.replaceAll("#MES#", mesMM).replaceAll("#ANO#", ano.toString());
+            String movimentoPath = Config.config.fetch("folders", "movimento");
+            movimentoPath = movimentoPath.replaceAll(":pastaEmpresa:", this.pastaEmpresa);
+            movimentoPath = movimentoPath.replaceAll(":mes:", this.mesMM);
+            movimentoPath = movimentoPath.replaceAll(":ano:", this.ano.toString());
 
-            pastaMovimento = new File(path);
+            pastaMovimento = new File(movimentoPath);
             if (!pastaMovimento.exists()) {
                 obs = roboView.mensagemNaoEncontrado(pastaMovimento);
-                return false;
-            } else {
-                return true;
             }
+
+            return true;
         } catch (Exception e) {
-            return false;
         }
+        return false;
     }
 
     public boolean setArquivoFatura() {
-        String filtroNomeArquivoFatura = "Fatura;Receber;.xls";
+        String filtroNomeArquivoFatura = Config.config.fetch("files", "fatura");
         try {
             arquivoFatura = Selector.getFileOnFolder(pastaMovimento, filtroNomeArquivoFatura, ".xlsx");
 
-            if (arquivoFatura.exists()) {
-                return true;
-            } else {
-                obs = filtroNomeArquivoFatura;
-                return false;
-            }
+            if (arquivoFatura.exists()) return true;
         } catch (Exception e) {
-            obs = filtroNomeArquivoFatura;
-            return false;
         }
+
+        obs = filtroNomeArquivoFatura;
+        return false;
     }
 
     public boolean setLctosFatura() {
@@ -93,9 +83,9 @@ public class Model {
 
     public boolean setTextoImportação() {
         try {
-            int deb = 11;
-            int cred = 5849;
-            int hp = 51;
+            int deb     = Integer.valueOf(Config.config.fetch("codigos", "debito"));
+            int cred    = Integer.valueOf(Config.config.fetch("codigos", "credito"));
+            int hp      = Integer.valueOf(Config.config.fetch("codigos", "historicoPadrao"));
 
             for (LctoTemplate lctoTemplate : lctosFatura) {
                 textoImportação.append(lctoTemplate.getData()).append(";");
@@ -106,16 +96,16 @@ public class Model {
                 textoImportação.append(lctoTemplate.getValor().toPlainString());
                 textoImportação.append("\r\n");
             }
-            
+
             return true;
         } catch (Exception e) {
             return false;
         }
     }
-    
-    public boolean salvarTextoImportação(){
+
+    public boolean salvarTextoImportação() {
         String pathArquivoFaturaTxt = arquivoFatura.getAbsolutePath().replaceAll(".xls", ".csv");
-        obs = pathArquivoFaturaTxt; 
+        obs = pathArquivoFaturaTxt;
         return FileManager.save(pathArquivoFaturaTxt, textoImportação.toString());
     }
 
@@ -125,10 +115,6 @@ public class Model {
 
     public String getPastaEmpresa() {
         return pastaEmpresa;
-    }
-
-    public String getPastaMovimentoPadrao() {
-        return pastaMovimentoPadrao;
     }
 
     public File getPastaMovimento() {
